@@ -44,14 +44,20 @@ int BP_init(unsigned btbSize, unsigned historySize, unsigned tagSize,
 
 	stats.flush_num = 0;
 	stats.br_num = 0;
-	stats.size = 0;
+	stats.size = btb_size*(tag_size + 30);
 
 
 	int sm_size = pow(2, history_size);
 
 	btb_table = new btb_line[btb_size];
 
-	global_history = 0;
+	if (is_global_hist){
+		global_history = 0;
+		stats.size += history_size;
+	} else {
+		stats.size += history_size * btb_size;
+	}
+
 
 	//if is global table (state machine)
 	if (is_global_table) {
@@ -60,7 +66,12 @@ int BP_init(unsigned btbSize, unsigned historySize, unsigned tagSize,
 		for (int i = 0; i < sm_size ; i++) {
 			global_sm[i] = WNT;
 		}
+
+		stats.size += 2 * sm_size;
+	} else {
+		stats.size += 2 * sm_size * btb_size;
 	}
+
 
 
 	// to initialize the table (0) in all the fields and is_valid = false
@@ -149,7 +160,6 @@ void BP_update(uint32_t pc, uint32_t targetPc, bool taken, uint32_t pred_dst) {
 		}
 		if (!btb_ent->is_valid) {
 			btb_ent->is_valid = true;
-			// increasing the stats size
 		}
 	}
 
