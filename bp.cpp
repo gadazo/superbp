@@ -121,7 +121,7 @@ bool BP_predict(uint32_t pc, uint32_t *dst) {
 			state cur_state = btb_table[btb_index].state_mach[sm_index];
 
 			if ((cur_state == ST) || (cur_state == WT)) {
-				*dst = (btb_table[btb_index].target) * 4;
+				*dst = btb_table[btb_index].target;
 				return true;
 			}
 		}
@@ -153,7 +153,9 @@ void BP_update(uint32_t pc, uint32_t targetPc, bool taken, uint32_t pred_dst) {
 		}
 	}
 
+
 	btb_table[btb_index].target = targetPc;
+
 	int sm_index = get_sm_index(*btb_table[btb_index].history, pc);
 	state* cur_state = &btb_table[btb_index].state_mach[sm_index];
 	if (taken) {
