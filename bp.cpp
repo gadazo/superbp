@@ -188,9 +188,22 @@ bool BP_predict(uint32_t pc, uint32_t *dst) {
   Output :        none
 */
 void BP_update(uint32_t pc, uint32_t targetPc, bool taken, uint32_t pred_dst) {
-	//find the right line in the btb (same as predict)
+	//find the right line in the btb (same as predict
 	int btb_index = (pc / 4) & (btb_size - 1);
 	btb_line* btb_ent = &btb_table[btb_index];
+
+	bool prediction = false;
+	if (btb_ent->is_valid) {
+		// check if the Tag is matched
+		if (btb_ent->tag == ((pc / 4) & ((int)(pow(2, tag_size)) - 1))) {
+			int sm_index = get_sm_index(*btb_table[btb_index].history, pc);
+			state cur_state = btb_table[btb_index].state_mach[sm_index];
+			if ((cur_state == ST) || (cur_state == WT)) {
+				prediction = true;
+			}
+		}
+	}
+
 	bool tag_compare = (btb_table[btb_index].tag
 		!= ((pc / 4) & ((int)(pow(2, tag_size)) - 1)));
 	if ((btb_ent->is_valid && tag_compare) || !btb_ent->is_valid) {
@@ -249,7 +262,10 @@ void BP_update(uint32_t pc, uint32_t targetPc, bool taken, uint32_t pred_dst) {
 	//update the stats
 	stats.br_num += 1;
 	//check if flushed
-	if (taken) {
+	if (prediction != taken){
+		stats.flush_num += 1;
+	}
+	else if (taken) {
 		if (targetPc != pred_dst)
 			stats.flush_num += 1;
 	}
